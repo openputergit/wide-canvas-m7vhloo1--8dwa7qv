@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellnexa - AI Health Companion</title>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --glow-color: #ff6b00;
+        }
+        
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #000;
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .glow-effect {
+            position: relative;
+        }
+        
+        .glow-effect::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: var(--glow-color);
+            opacity: 0.2;
+            filter: blur(10px);
+            z-index: -1;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .ripple {
+            position: absolute;
+            border: 4px solid var(--glow-color);
+            border-radius: 50%;
+            animation: ripple 1s linear infinite;
+        }
+        
+        @keyframes ripple {
+            0% { width: 0; height: 0; opacity: 0.5; }
+            100% { width: 100px; height: 100px; opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="flex flex-col items-center justify-center min-h-screen p-6">
+            <div class="text-4xl font-bold mb-8 text-orange-500 glow-effect">Wellnexa</div>
+            <div class="w-full max-w-md space-y-6">
+                <div class="relative">
+                    <input type="email" id="email" placeholder="Email" class="w-full px-4 py-3 bg-black border-2 border-orange-500 rounded-lg focus:outline-none focus:border-orange-600 text-white">
+                </div>
+                <div class="relative">
+                    <input type="password" id="password" placeholder="Password" class="w-full px-4 py-3 bg-black border-2 border-orange-500 rounded-lg focus:outline-none focus:border-orange-600 text-white">
+                </div>
+                <button onclick="login()" class="w-full py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-all duration-300 glow-effect">
+                    Login
+                </button>
+            </div>
+        </div>
+
+        <!-- Main App Screen -->
+        <div id="mainScreen" class="hidden min-h-screen">
+            <!-- Header -->
+            <header class="p-4 border-b border-orange-500/30">
+                <div class="flex justify-between items-center">
+                    <div class="text-2xl font-bold text-orange-500">Wellnexa</div>
+                    <button id="aiDoctorBtn" class="px-4 py-2 bg-orange-500 rounded-lg glow-effect">
+                        <i class="bi bi-mic-fill"></i> AI Doctor
+                    </button>
+                </div>
+            </header>
+
+            <!-- Health Stats -->
+            <div class="p-4 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-900 p-4 rounded-lg border border-orange-500/30">
+                        <div class="text-orange-500">Steps</div>
+                        <div class="text-2xl font-bold">8,547</div>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg border border-orange-500/30">
+                        <div class="text-orange-500">Heart Rate</div>
+                        <div class="text-2xl font-bold">72 BPM</div>
+                    </div>
+                </div>
+
+                <!-- AI Health Assistant -->
+                <div id="aiAssistant" class="bg-gray-900 p-4 rounded-lg border border-orange-500/30 mt-6">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
+                            <i class="bi bi-robot text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold">AI Health Assistant</div>
+                            <div class="text-sm text-gray-400">Ask me anything about your health</div>
+                        </div>
+                    </div>
+                    <div id="chatMessages" class="space-y-4 max-h-60 overflow-y-auto"></div>
+                    <div class="mt-4 flex space-x-2">
+                        <input type="text" id="userInput" placeholder="Type your health question..." class="flex-1 px-4 py-2 bg-black border border-orange-500 rounded-lg focus:outline-none focus:border-orange-600">
+                        <button onclick="sendMessage()" class="px-4 py-2 bg-orange-500 rounded-lg hover:bg-orange-600 transition-all duration-300">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Health Metrics Form -->
+                <div class="bg-gray-900 p-4 rounded-lg border border-orange-500/30">
+                    <h3 class="text-lg font-bold mb-4">Update Health Metrics</h3>
+                    <form id="healthMetricsForm" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="number" placeholder="Age" class="px-4 py-2 bg-black border border-orange-500 rounded-lg">
+                            <input type="number" placeholder="Weight (kg)" class="px-4 py-2 bg-black border border-orange-500 rounded-lg">
+                            <input type="number" placeholder="Height (cm)" class="px-4 py-2 bg-black border border-orange-500 rounded-lg">
+                            <input type="number" placeholder="Blood Pressure" class="px-4 py-2 bg-black border border-orange-500 rounded-lg">
+                        </div>
+                        <button type="submit" class="w-full py-2 bg-orange-500 rounded-lg hover:bg-orange-600 transition-all duration-300">
+                            Update Metrics
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize speech synthesis
+        const synth = window.speechSynthesis;
+        let speaking = false;
+
+        // Login function
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (email && password) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainScreen').classList.remove('hidden');
+            } else {
+                alert('Please enter both email and password');
+            }
+        }
+
+        // AI Doctor voice interaction
+        document.getElementById('aiDoctorBtn').addEventListener('click', () => {
+            if (!speaking) {
+                const greeting = new SpeechSynthesisUtterance("Hello! I'm your AI health assistant. How can I help you today?");
+                greeting.pitch = 1.2;
+                greeting.rate = 0.9;
+                synth.speak(greeting);
+                speaking = true;
+                
+                // Add the greeting to chat
+                addMessageToChat("Hello! I'm your AI health assistant. How can I help you today?", 'ai');
+            } else {
+                synth.cancel();
+                speaking = false;
+            }
+        });
+
+        // Chat functionality
+        function addMessageToChat(message, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `p-3 rounded-lg ${sender === 'user' ? 'bg-orange-500 ml-auto' : 'bg-gray-800'} max-w-[80%]`;
+            messageDiv.textContent = message;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            
+            if (message) {
+                addMessageToChat(message, 'user');
+                userInput.value = '';
+
+                // Show loading state
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'flex space-x-2 p-3';
+                loadingDiv.innerHTML = '<div class="w-2 h-2 bg-orange-500 rounded-full animate-bounce"></div>'.repeat(3);
+                document.getElementById('chatMessages').appendChild(loadingDiv);
+
+                try {
+                    const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer Y7FZ6JCgoyOgmy4c74aO1AaCR663',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            messages: [{
+                                role: "user",
+                                content: [{
+                                    type: "text",
+                                    text: message
+                                }]
+                            }]
+                        })
+                    });
+
+                    const data = await response.json();
+                    loadingDiv.remove();
+                    addMessageToChat(data.message, 'ai');
+
+                    // Speak the response
+                    const utterance = new SpeechSynthesisUtterance(data.message);
+                    utterance.pitch = 1.2;
+                    utterance.rate = 0.9;
+                    synth.speak(utterance);
+
+                } catch (error) {
+                    loadingDiv.remove();
+                    addMessageToChat("I apologize, but I'm having trouble connecting right now. Please try again later.", 'ai');
+                }
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('healthMetricsForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Health metrics updated successfully!');
+        });
+
+        // Handle enter key in chat
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
